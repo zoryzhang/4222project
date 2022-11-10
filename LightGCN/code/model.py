@@ -12,6 +12,7 @@ import torch
 from LightGCN.code.dataloader import BasicDataset
 from torch import nn
 import numpy as np
+from sympy import symbols, Eq, solve
 
 
 class BasicModel(nn.Module):    
@@ -155,12 +156,7 @@ class LightGCN(BasicModel):
         else:
             g_droped = self.Graph    
         #print(self.n_layers)
-        from sympy import symbols, Eq, solve
-        if self.config['stacking_func']==1:
-            x = symbols('x')
-            eq1 = Eq(1/x+1/x**2+1/x**3+1/x**4-1)
-            sol = solve(eq1)[1]
-            #print(sol)
+    
         for layer in range(self.n_layers):
             if self.A_split:
                 temp_emb = []
@@ -170,8 +166,15 @@ class LightGCN(BasicModel):
                 # original weights
                 if self.config['stacking_func']==0:
                     all_emb = side_emb
+                # new weights 1
                 elif self.config['stacking_func']==1:
+                    x = symbols('x')
+                    eq1 = Eq(1/x+1/x**2+1/x**3+1/x**4-1)
+                    sol = solve(eq1)[1]
                     all_emb = side_emb/sol**(layer+1)
+                elif self.config['stacking_func']==2 or self.config['stacking_func']==3:
+                    alpha = self.config['alphas'][layer]
+                    all_emb =  torch.matmul(side_emb, alpha)
             else:
                 all_emb = torch.sparse.mm(g_droped, all_emb)
             embs.append(all_emb)
@@ -179,6 +182,7 @@ class LightGCN(BasicModel):
        
         # original weights
         light_out = torch.mean(embs, dim=1)
+        # new weights 1
         if self.config['stacking_func']==1:
             light_out = light_out*(self.n_layers+1)
  

@@ -15,9 +15,18 @@ import LightGCN.code.register as register
 from LightGCN.code.register import dataset
 
 #STACKING_FUNC = 0
-
-def run_lightgcn(stacking_func):
+def sanity_check(stacking_func=0, n_layer=3):
     world.config['stacking_func'] = stacking_func
+    world.config['lightGCN_n_layers'] = n_layer
+    sf = world.config['stacking_func']
+    cprint(f'stacking_func: {sf}')
+    Recmodel = register.MODELS[world.model_name](world.config, dataset)
+    Recmodel = Recmodel.to(world.device)
+    return Recmodel
+
+def run_lightgcn(stacking_func=0, n_layer=3):
+    world.config['stacking_func'] = stacking_func
+    world.config['lightGCN_n_layers'] = n_layer
     sf = world.config['stacking_func']
     cprint(f'stacking_func: {sf}')
     Recmodel = register.MODELS[world.model_name](world.config, dataset)
@@ -51,7 +60,7 @@ def run_lightgcn(stacking_func):
                 Procedure.Test(dataset, Recmodel, epoch, w, world.config['multicore'])
             output_information = Procedure.BPR_train_original(dataset, Recmodel, bpr, epoch, neg_k=Neg_k,w=w)
             print(f'EPOCH[{epoch+1}/{world.TRAIN_epochs}] {output_information}')
-            torch.save(Recmodel.state_dict(), weight_file)
+            #torch.save(Recmodel.state_dict(), weight_file)
     finally:
         if world.tensorboard:
             w.close()

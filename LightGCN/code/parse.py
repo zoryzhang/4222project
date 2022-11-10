@@ -64,10 +64,10 @@ def parse_args():
             "comment": 'lgn',
             "load": 0,
             "lr": 0.0001,
-            "epochs": 500,
+            "epochs": 1000,
             "multicore": 0,
             "seed": 2020,
             "model": 'lgn',
-            "stacking_func":0
+            "stacking_func":3
     })
     return args
