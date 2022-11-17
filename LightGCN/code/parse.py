@@ -48,7 +48,7 @@ def parse_args():
 
     import easydict
     args = easydict.EasyDict({
-            "bpr_batch": 2048,
+            "bpr_batch": 64,
             "dataset": 'movielens',
             "recdim": 64,
             "pretrain": 0,
@@ -64,7 +64,7 @@ def parse_args():
             "comment": 'lgn',
             "load": 0,
             "lr": 0.0001,
-            "epochs": 1000,
+            "epochs": 10,
             "multicore": 0,
             "seed": 2020,
             "model": 'lgn',

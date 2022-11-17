@@ -18,7 +18,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 #def set_args(stacking_func):
 args = parse_args()
 
-ROOT_PATH = "/Users/sheng/Documents/GitHub/4222project/LightGCN"
+ROOT_PATH = ".."
 CODE_PATH = join(ROOT_PATH, 'code')
 DATA_PATH = join(ROOT_PATH, 'data')
 BOARD_PATH = join(CODE_PATH, 'runs')
@@ -56,7 +56,7 @@ if args.stacking_func==3:
 print(config['alphas'])
 
 GPU = torch.cuda.is_available()
-device = torch.device('cuda' if GPU else "cpu")
+device = torch.device('cuda:0' if GPU else "cpu")
 CORES = multiprocessing.cpu_count() // 2
 seed = args.seed
 
