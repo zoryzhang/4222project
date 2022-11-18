@@ -18,7 +18,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 #def set_args(stacking_func):
 args = parse_args()
 
-ROOT_PATH = ".."
+ROOT_PATH = "./LightGCN" # change here!
 CODE_PATH = join(ROOT_PATH, 'code')
 DATA_PATH = join(ROOT_PATH, 'data')
 BOARD_PATH = join(CODE_PATH, 'runs')
