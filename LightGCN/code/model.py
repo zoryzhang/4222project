@@ -156,6 +156,11 @@ class LightGCN(BasicModel):
         else:
             g_droped = self.Graph    
         #print(self.n_layers)
+        if self.config['stacking_func']==1 or self.config['stacking_func']==1.5:
+            x = symbols('x')
+            #eq1 = Eq(1/x+1/x**2+1/x**3+1/x**4-1)
+            eq1 = Eq(1/x+1/x**2+1/x**3-1)
+            sol = solve(eq1)[1]
     
         for layer in range(self.n_layers):
             if self.A_split:
@@ -168,10 +173,15 @@ class LightGCN(BasicModel):
                     all_emb = side_emb
                 # new weights 1
                 elif self.config['stacking_func']==1:
-                    x = symbols('x')
-                    eq1 = Eq(1/x+1/x**2+1/x**3+1/x**4-1)
-                    sol = solve(eq1)[1]
+                    #all_emb = side_emb/sol**(layer+1)
+                    all_emb = side_emb/sol**((self.n_layers-layer))
+                    print(1//sol**((self.n_layers-layer)))
+
+                elif self.config['stacking_func']==1.5:
+                    #all_emb = side_emb/sol**((self.n_layers-layer))
+                    #print(1//sol**((self.n_layers-layer)))
                     all_emb = side_emb/sol**(layer+1)
+
                 elif self.config['stacking_func']==2 or self.config['stacking_func']==3:
                     alpha = self.config['alphas'][layer]
                     all_emb =  torch.matmul(side_emb, alpha)

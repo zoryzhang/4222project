@@ -24,7 +24,7 @@ def sanity_check(stacking_func=0, n_layer=3):
     Recmodel = Recmodel.to(world.device)
     return Recmodel
 
-def run_lightgcn(stacking_func=0, n_layer=3):
+def run_lightgcn(stacking_func, n_layer=3):
     world.config['stacking_func'] = stacking_func
     world.config['lightGCN_n_layers'] = n_layer
     sf = world.config['stacking_func']
