@@ -18,7 +18,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 #def set_args(stacking_func):
 args = parse_args()
 
-ROOT_PATH = "/Users/sheng/Documents/GitHub/4222project/LightGCN"
+ROOT_PATH = "./LightGCN" # change here!
 CODE_PATH = join(ROOT_PATH, 'code')
 DATA_PATH = join(ROOT_PATH, 'data')
 BOARD_PATH = join(CODE_PATH, 'runs')
