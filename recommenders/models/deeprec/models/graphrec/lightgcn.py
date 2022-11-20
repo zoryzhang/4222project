@@ -7,6 +7,7 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+from sympy import symbols, Eq, solve
 from recommenders.evaluation.python_evaluation import (
     map_at_k,
     ndcg_at_k,
@@ -54,6 +55,15 @@ class LightGCN(object):
         self.save_epoch = hparams.save_epoch
         self.metrics = hparams.metrics
         self.model_dir = hparams.MODEL_DIR
+        self.stacking_func = hparams.stacking_func
+        #self.alphas = nn.Parameter(torch.Tensor(self.n_layers+1, 1))
+        #nn.init.xavier_uniform_(self.alphas)
+        initializer = tf.compat.v1.keras.initializers.VarianceScaling(
+            scale=1.0, mode="fan_avg", distribution="uniform"
+        )
+        self.alphas = tf.Variable(initializer([self.n_layers+1, 1]), trainable=True)
+        #if self.stacking_func==3:
+        #    nn.init.constant_(self.alphas, 1/(self.n_layers+1))
 
         metric_options = ["map", "ndcg", "precision", "recall"]
         for metric in self.metrics:
@@ -154,14 +164,33 @@ class LightGCN(object):
         )
         all_embeddings = [ego_embeddings]
 
+        if self.stacking_func==1 or self.stacking_func==1.5:
+            x = symbols('x')
+            #eq1 = Eq(1/x+1/x**2+1/x**3+1/x**4-1)
+            eq1 = Eq(1/x+1/x**2+1/x**3-1, 0)
+            sol = solve(eq1)[1]
+
         for k in range(0, self.n_layers):
             ego_embeddings = tf.sparse.sparse_dense_matmul(A_hat, ego_embeddings)
-            all_embeddings += [ego_embeddings]
+            print(ego_embeddings)
+            if self.stacking_func==0:
+                all_embeddings += [ego_embeddings]
+            elif self.stacking_func==1:
+                divby = tf.fill(tf.shape(ego_embeddings), sol**(k+1))
+                all_embeddings += [tf.divide(ego_embeddings,[divby])]
+            elif self.stacking_func==1.5:
+                all_embeddings += [ego_embeddings/(sol**((self.n_layers-k)))]
+            elif self.stacking_func==2 or self.stacking_func==3:
+                alpha = self.alphas[k]
+                all_embeddings += [tf.matmul(ego_embeddings, alpha)]
+
 
         all_embeddings = tf.stack(all_embeddings, 1)
         all_embeddings = tf.reduce_mean(
             input_tensor=all_embeddings, axis=1, keepdims=False
         )
+        if self.stacking_func==1:
+            all_embeddings = all_embeddings*(self.n_layers+1)
         u_g_embeddings, i_g_embeddings = tf.split(
             all_embeddings, [self.n_users, self.n_items], 0
         )
@@ -296,6 +325,7 @@ class LightGCN(object):
         topk_scores = self.recommend_k_items(
             self.data.test, top_k=self.top_k, use_id=True
         )
+
         ret = []
         for metric in self.metrics:
             if metric == "map":
@@ -322,6 +352,7 @@ class LightGCN(object):
                         self.data.test, topk_scores, relevancy_method=None, k=self.top_k
                     )
                 )
+       
         return ret
 
     def score(self, user_ids, remove_seen=True):

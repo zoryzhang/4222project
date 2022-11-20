@@ -196,6 +196,7 @@ def load_pandas_df(
             year_col='Year'
         )
     """
+    """
     size = size.lower()
     if size not in DATA_FORMAT and size not in MOCK_DATA_FORMAT:
         raise ValueError(ERROR_MOVIE_LENS_SIZE)
@@ -224,6 +225,7 @@ def load_pandas_df(
     with download_path(local_cache_path) as path:
         filepath = os.path.join(path, "ml-{}.zip".format(size))
         datapath, item_datapath = _maybe_download_and_extract(size, filepath)
+        print('download path 3')
 
         # Load movie features such as title, genres, and release year
         item_df = _load_item_df(
@@ -239,6 +241,7 @@ def load_pandas_df(
             usecols=[*range(len(header))],
             header=0 if DATA_FORMAT[size].has_header else None,
         )
+    
 
         # Convert 'rating' type to float
         if len(header) > 2:
@@ -247,6 +250,9 @@ def load_pandas_df(
         # Merge rating df w/ item_df
         if item_df is not None:
             df = df.merge(item_df, on=header[1])
+    """
+    if size=='100k':
+        df = pd.read_csv('../../../ml-100k/u.data', sep='\t', header=None)
 
     return df
 
@@ -527,17 +533,26 @@ def _get_schema(header, schema):
 def _maybe_download_and_extract(size, dest_path):
     """Downloads and extracts MovieLens rating and item datafiles if they don’t already exist"""
     dirs, _ = os.path.split(dest_path)
+    print('dest path: '+dest_path)
     if not os.path.exists(dirs):
+        print('not exist')
         os.makedirs(dirs)
 
     _, rating_filename = os.path.split(DATA_FORMAT[size].path)
+    print(rating_filename)
     rating_path = os.path.join(dirs, rating_filename)
+    print(rating_path)
     _, item_filename = os.path.split(DATA_FORMAT[size].item_path)
+    print(item_filename)
     item_path = os.path.join(dirs, item_filename)
+    print(item_path)
 
     if not os.path.exists(rating_path) or not os.path.exists(item_path):
+        print('not exist 2')
         download_movielens(size, dest_path)
+        print('downloaded')
         extract_movielens(size, rating_path, item_path, dest_path)
+        print('extracted')
 
     return rating_path, item_path
 
@@ -554,6 +569,8 @@ def download_movielens(size, dest_path):
 
     url = "https://files.grouplens.org/datasets/movielens/ml-" + size + ".zip"
     dirs, file = os.path.split(dest_path)
+    print('dirs: '+dirs)
+    print('file: '+file)
     maybe_download(url, file, work_directory=dirs)
 
 
@@ -569,13 +586,15 @@ def extract_movielens(size, rating_path, item_path, zip_path):
         item_path (str): Destination path for item datafile
         zip_path (str): zipfile path
     """
+    """
     with ZipFile(zip_path, "r") as z:
         with z.open(DATA_FORMAT[size].path) as zf, open(rating_path, "wb") as f:
             shutil.copyfileobj(zf, f)
         with z.open(DATA_FORMAT[size].item_path) as zf, open(item_path, "wb") as f:
             shutil.copyfileobj(zf, f)
 
-
+    """
+"""
 # For more information on data synthesis, see https://pandera.readthedocs.io/en/latest/data_synthesis_strategies.html
 @extensions.register_check_method(statistics=["columns"], supported_types=pd.DataFrame)
 def unique_columns(df, *, columns):
@@ -583,7 +602,7 @@ def unique_columns(df, *, columns):
 
 
 class MockMovielensSchema(pa.SchemaModel):
-    """
+    
     Mock dataset schema to generate fake data for testing purpose.
     This schema is configured to mimic the Movielens dataset
 
@@ -592,8 +611,7 @@ class MockMovielensSchema(pa.SchemaModel):
     Dataset schema and generation is configured using pandera.
     Please see https://pandera.readthedocs.io/en/latest/schema_models.html
     for more information.
-    """
-
+    
     # Some notebooks will do a cross join with userID and itemID,
     # a sparse range for these IDs can slow down the notebook tests
     userID: Series[int] = Field(in_range={"min_value": 1, "max_value": 50}, alias=DEFAULT_USER_COL)
@@ -612,7 +630,8 @@ class MockMovielensSchema(pa.SchemaModel):
         keep_title_col: bool = False,
         keep_genre_col: bool = False,
     ) -> pd.DataFrame:
-        """Return fake movielens dataset as a Pandas Dataframe with specified rows.
+        
+        Return fake movielens dataset as a Pandas Dataframe with specified rows.
 
         Args:
             size (int): number of rows to generate
@@ -623,7 +642,7 @@ class MockMovielensSchema(pa.SchemaModel):
 
         Returns:
             pandas.DataFrame: a mock dataset
-        """
+        
         schema = cls.to_schema()
         if keep_first_n_cols is not None:
             if keep_first_n_cols < 1 or keep_first_n_cols > len(DEFAULT_HEADER):
@@ -650,7 +669,8 @@ class MockMovielensSchema(pa.SchemaModel):
         keep_genre_col: bool = False,
         tmp_path: Optional[str] = None,
     ):
-        """Return fake movielens dataset as a Spark Dataframe with specified rows
+    
+        Return fake movielens dataset as a Spark Dataframe with specified rows
 
         Args:
             spark (SparkSession): spark session to load the dataframe into
@@ -664,7 +684,7 @@ class MockMovielensSchema(pa.SchemaModel):
 
         Returns:
             pyspark.sql.DataFrame: a mock dataset
-        """
+        
         pandas_df = cls.get_df(
             size=size, seed=seed, keep_title_col=True, keep_genre_col=True
         )
@@ -699,3 +719,4 @@ class MockMovielensSchema(pa.SchemaModel):
                 StructField(DEFAULT_GENRE_COL, StringType()),
             ]
         )
+"""

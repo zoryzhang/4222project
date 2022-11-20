@@ -420,6 +420,7 @@ def precision_at_k(
     rating_pred,
     col_user=DEFAULT_USER_COL,
     col_item=DEFAULT_ITEM_COL,
+    col_rating=DEFAULT_RATING_COL,
     col_prediction=DEFAULT_PREDICTION_COL,
     relevancy_method="top_k",
     k=DEFAULT_K,
@@ -450,7 +451,7 @@ def precision_at_k(
     Returns:
         float: precision at k (min=0, max=1)
     """
-    col_rating = _get_rating_column(relevancy_method, **kwargs)
+    #col_rating = _get_rating_column(relevancy_method, **kwargs)
     df_hit, df_hit_count, n_users = merge_ranking_true_pred(
         rating_true=rating_true,
         rating_pred=rating_pred,
@@ -474,6 +475,7 @@ def recall_at_k(
     rating_pred,
     col_user=DEFAULT_USER_COL,
     col_item=DEFAULT_ITEM_COL,
+    col_rating=DEFAULT_RATING_COL,
     col_prediction=DEFAULT_PREDICTION_COL,
     relevancy_method="top_k",
     k=DEFAULT_K,
@@ -498,7 +500,7 @@ def recall_at_k(
         float: recall at k (min=0, max=1). The maximum value is 1 even when fewer than
         k items exist for a user in rating_true.
     """
-    col_rating = _get_rating_column(relevancy_method, **kwargs)
+    #col_rating = _get_rating_column(relevancy_method, **kwargs)
     df_hit, df_hit_count, n_users = merge_ranking_true_pred(
         rating_true=rating_true,
         rating_pred=rating_pred,
@@ -522,6 +524,7 @@ def ndcg_at_k(
     rating_pred,
     col_user=DEFAULT_USER_COL,
     col_item=DEFAULT_ITEM_COL,
+    col_rating=DEFAULT_RATING_COL,
     col_prediction=DEFAULT_PREDICTION_COL,
     relevancy_method="top_k",
     k=DEFAULT_K,
@@ -553,7 +556,7 @@ def ndcg_at_k(
     Returns:
         float: nDCG at k (min=0, max=1).
     """
-    col_rating = _get_rating_column(relevancy_method, **kwargs)
+    #col_rating = _get_rating_column(relevancy_method, **kwargs)
     df_hit, _, _ = merge_ranking_true_pred(
         rating_true=rating_true,
         rating_pred=rating_pred,
@@ -621,6 +624,7 @@ def map_at_k(
     rating_pred,
     col_user=DEFAULT_USER_COL,
     col_item=DEFAULT_ITEM_COL,
+    col_rating=DEFAULT_RATING_COL,
     col_prediction=DEFAULT_PREDICTION_COL,
     relevancy_method="top_k",
     k=DEFAULT_K,
@@ -657,7 +661,7 @@ def map_at_k(
     Returns:
         float: MAP at k (min=0, max=1).
     """
-    col_rating = _get_rating_column(relevancy_method, **kwargs)
+    #col_rating = _get_rating_column(relevancy_method, **kwargs)
     df_hit, df_hit_count, n_users = merge_ranking_true_pred(
         rating_true=rating_true,
         rating_pred=rating_pred,
