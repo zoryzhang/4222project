@@ -164,6 +164,7 @@ class LightGCN(object):
         )
         all_embeddings = [ego_embeddings]
 
+        # TODO
         if self.stacking_func==1 or self.stacking_func==1.5:
             x = symbols('x')
             #eq1 = Eq(1/x+1/x**2+1/x**3+1/x**4-1)
@@ -187,6 +188,7 @@ class LightGCN(object):
             elif self.stacking_func==2 or self.stacking_func==3:
                 alpha = self.alphas[k]
                 all_embeddings += [tf.matmul(ego_embeddings, alpha)]
+        # TODO
 
 
         all_embeddings = tf.stack(all_embeddings, 1)
@@ -356,7 +358,7 @@ class LightGCN(object):
                         self.data.test, topk_scores, relevancy_method=None, k=self.top_k
                     )
                 )
-       
+
         return ret
 
     def score(self, user_ids, remove_seen=True):
