@@ -166,15 +166,28 @@ class LightGCN(object):
         ego_embeddings = tf.concat(
             [self.weights["user_embedding"], self.weights["item_embedding"]], axis=0
         )
-        all_embeddings = [ego_embeddings]
 
-        # TODO
+        #changes start here
+
         if self.stacking_func==1 or self.stacking_func==1.5:
             x = symbols('x')
-            #eq1 = Eq(1/x+1/x**2+1/x**3+1/x**4-1)
-            eq1 = Eq(1/x+1/x**2+1/x**3-1, 0)
+            eq1 = Eq(1/x+1/x**2+1/x**3+1/x**4-1)
+            #eq1 = Eq(1/x+1/x**2+1/x**3-1, 0)
             sol = solve(eq1)[1]
             sol = 1.8393
+
+
+        if self.stacking_func==1:
+            ego_embeddings = tf.divide(ego_embeddings,sol**1)
+
+        elif self.stacking_func==1.5:
+            ego_embeddings = tf.divide(ego_embeddings,sol**(self.n_layers+1))
+
+        elif self.stacking_func==2 or self.stacking_func==3:
+            alpha = self.alphas[0]
+            ego_embeddings =  tf.scalar_mul(ego_embeddings, alpha)
+
+        all_embeddings = [ego_embeddings]
 
         for k in range(0, self.n_layers):
             ego_embeddings = tf.sparse.sparse_dense_matmul(A_hat, ego_embeddings)
@@ -184,15 +197,16 @@ class LightGCN(object):
                 #div = tf.convert_to_tensor(sol**(k+1))
                 #div = tf.cast(sol, tf.complex64)
                 #div = 1.8393**(k+1)
-                all_embeddings += [tf.divide(ego_embeddings, sol**(k+1))]
+                all_embeddings += [tf.divide(ego_embeddings, sol**(k+2))]
                 #divby = tf.fill(tf.shape(ego_embeddings), sol**(k+1))
                 #all_embeddings += [tf.divide(ego_embeddings,[divby])]
             elif self.stacking_func==1.5:
-                all_embeddings += [tf.divide(ego_embeddings,sol**((self.n_layers-k)))]
+                all_embeddings += [tf.divide(ego_embeddings,sol**((self.n_layers-k+1)))]
             elif self.stacking_func==2 or self.stacking_func==3:
-                alpha = self.alphas[k]
-                all_embeddings += [tf.matmul(ego_embeddings, alpha)]
-        # TODO
+                alpha = self.alphas[k+1]
+                all_embeddings += [tf.scalar_mul(ego_embeddings, alpha)]
+
+        #changes end here
 
 
         all_embeddings = tf.stack(all_embeddings, 1)
