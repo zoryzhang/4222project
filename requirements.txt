@@ -3,7 +3,9 @@
 # echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/' > $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
 # echo 'export CUDA_HOME=/usr/local/cuda-10.1' > $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
 # echo 'PATH=/usr/local/cuda-10.1/bin:$PATH' > $CONDA_PREFIX/etc/conda/activate.d/env_vars.sh
-# nvcc -V
+# deactivate and activate again
+# nvcc -V # should be 10.1
+
 # conda install python=3.8.15
 # pip install torch==1.8.1+cu101 torchvision==0.9.1+cu101 torchaudio==0.8.1 -f https://download.pytorch.org/whl/torch_stable.html
 # conda install -c conda-forge cudatoolkit=10.1 cudnn=7.6.0
