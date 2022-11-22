@@ -7,6 +7,7 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+from tensorflow.keras.callbacks import TensorBoard
 from sympy import symbols, Eq, solve
 from recommenders.evaluation.python_evaluation import (
     map_at_k,
@@ -17,6 +18,9 @@ from recommenders.evaluation.python_evaluation import (
 from recommenders.utils.python_utils import get_top_k_scored_items
 
 tf.compat.v1.disable_eager_execution()  # need to disable eager in TF2.x
+
+file_name = 'saved_model'
+tensorboard = TensorBoard(log_dir="logs\\{}".format(file_name))
 
 
 class LightGCN(object):
