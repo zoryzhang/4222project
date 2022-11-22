@@ -19,9 +19,6 @@ from recommenders.utils.python_utils import get_top_k_scored_items
 
 tf.compat.v1.disable_eager_execution()  # need to disable eager in TF2.x
 
-file_name = 'saved_model'
-tensorboard = TensorBoard(log_dir="logs\\{}".format(file_name))
-
 
 class LightGCN(object):
     """LightGCN model
@@ -59,6 +56,15 @@ class LightGCN(object):
         self.save_epoch = hparams.save_epoch
         self.metrics = hparams.metrics
         self.model_dir = hparams.MODEL_DIR
+
+        # ====================== our changes ======================
+        self.save_board = hparams.save_board
+        if self.save_board:
+            self.writer_train = tf.summary.create_file_writer(log_dir=join(hparams.BOARD_DIR, time.strftime ("%y%m%d_%H%M_") + hparams.board_comment, "train"))
+            self.writer_val = tf.summary.create_file_writer(log_dir=join(hparams.BOARD_DIR, time.strftime ("%y%m%d_%H%M_") + hparams.board_comment, "val"))
+        else:
+            self.w = None
+
         self.stacking_func = hparams.stacking_func
         #self.alphas = nn.Parameter(torch.Tensor(self.n_layers+1, 1))
         #nn.init.xavier_uniform_(self.alphas)
@@ -68,6 +74,7 @@ class LightGCN(object):
         self.alphas = tf.Variable(initializer([self.n_layers+1, 1]), trainable=True)
         #if self.stacking_func==3:
         #    nn.init.constant_(self.alphas, 1/(self.n_layers+1))
+        # ====================== our changes ======================
 
         metric_options = ["map", "ndcg", "precision", "recall"]
         for metric in self.metrics:
@@ -287,6 +294,14 @@ class LightGCN(object):
             train_end = time.time()
             train_time = train_end - train_start
 
+            # ====================== our changes ======================
+            if self.save_board:
+                with self.writer_train.as_default():
+                    tf.summary.scalar('Loss/total_loss', loss, step=epoch)
+                    tf.summary.scalar('Loss/mf_loss', mf_loss, step=epoch)
+                    tf.summary.scalar('Loss/emb_loss', emb_loss, step=epoch)
+            # ====================== our changes ======================
+
             if self.save_model and epoch % self.save_epoch == 0:
                 save_path_str = os.path.join(self.model_dir, "epoch_" + str(epoch))
                 if not os.path.exists(save_path_str):
@@ -322,6 +337,15 @@ class LightGCN(object):
                         ),
                     )
                 )
+                # ====================== our changes ======================
+                if self.save_board:
+                    with self.writer_val.as_default():
+                        tf.summary.scalar('Loss/total_loss', loss, step=epoch)
+                        tf.summary.scalar('Loss/mf_loss', mf_loss, step=epoch)
+                        tf.summary.scalar('Loss/emb_loss', emb_loss, step=epoch)
+                        for metric, r in zip(self.metrics, ret)
+                            tf.summary.scalar(f'Matric/{metric}', r, step=epoch)
+                # ====================== our changes ======================
 
     def load(self, model_path=None):
         """Load an existing model.
