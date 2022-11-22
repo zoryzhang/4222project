@@ -57,25 +57,6 @@ class LightGCN(object):
         self.metrics = hparams.metrics
         self.model_dir = hparams.MODEL_DIR
 
-        # ====================== our changes ======================
-        self.save_board = hparams.save_board
-        if self.save_board:
-            self.writer_train = tf.summary.create_file_writer(log_dir=join(hparams.BOARD_DIR, time.strftime ("%y%m%d_%H%M_") + hparams.board_comment, "train"))
-            self.writer_val = tf.summary.create_file_writer(log_dir=join(hparams.BOARD_DIR, time.strftime ("%y%m%d_%H%M_") + hparams.board_comment, "val"))
-        else:
-            self.w = None
-
-        self.stacking_func = hparams.stacking_func
-        #self.alphas = nn.Parameter(torch.Tensor(self.n_layers+1, 1))
-        #nn.init.xavier_uniform_(self.alphas)
-        initializer = tf.compat.v1.keras.initializers.VarianceScaling(
-            scale=1.0, mode="fan_avg", distribution="uniform"
-        )
-        self.alphas = tf.Variable(initializer([self.n_layers+1, 1]), trainable=True)
-        #if self.stacking_func==3:
-        #    nn.init.constant_(self.alphas, 1/(self.n_layers+1))
-        # ====================== our changes ======================
-
         metric_options = ["map", "ndcg", "precision", "recall"]
         for metric in self.metrics:
             if metric not in metric_options:
@@ -137,7 +118,39 @@ class LightGCN(object):
         self.sess = tf.compat.v1.Session(
             config=tf.compat.v1.ConfigProto(gpu_options=gpu_options)
         )
+
         self.sess.run(tf.compat.v1.global_variables_initializer())
+
+        # ====================== our changes ======================
+        self.save_board = hparams.save_board
+        if self.save_board:
+            save_board_path = os.path.join(hparams.BOARD_DIR, time.strftime ("%Y%m%d_%H%M_") + hparams.board_comment)
+            print(f"using tensorboard in path {os.path.abspath(save_board_path)}")
+
+            if not os.path.exists(os.path.join(save_board_path, "train")):
+                os.makedirs(os.path.join(save_board_path, "train"))
+            if not os.path.exists(os.path.join(save_board_path, "val")):
+                os.makedirs(os.path.join(save_board_path, "val"))
+
+            self.writer_train = tf.summary.FileWriter(logdir = os.path.join(save_board_path, "train"), self.sess.graph)
+            self.writer_val = tf.summary.FileWriter(logdir = os.path.join(save_board_path, "val"), self.sess.graph)
+        else:
+            print(f"not using tensorboard")
+            self.writer_train, self.writer_val = None, None
+
+
+        self.stacking_func = hparams.stacking_func
+        #self.alphas = nn.Parameter(torch.Tensor(self.n_layers+1, 1))
+        #nn.init.xavier_uniform_(self.alphas)
+        initializer = tf.compat.v1.keras.initializers.VarianceScaling(
+            scale=1.0, mode="fan_avg", distribution="uniform"
+        )
+        self.alphas = tf.Variable(initializer([self.n_layers+1, 1]), trainable=True)
+        #if self.stacking_func==3:
+        #    nn.init.constant_(self.alphas, 1/(self.n_layers+1))
+
+        self.sess.run([self.writer_train.init(), self.writer_val.init()])
+        # ====================== our changes ======================
 
     def _init_weights(self):
         """Initialize user and item embeddings.
@@ -300,12 +313,16 @@ class LightGCN(object):
                     tf.summary.scalar('Loss/total_loss', loss, step=epoch)
                     tf.summary.scalar('Loss/mf_loss', mf_loss, step=epoch)
                     tf.summary.scalar('Loss/emb_loss', emb_loss, step=epoch)
+                #self.writer_train.flush()
+                self.sess.run(self.writer_train.flush())
             # ====================== our changes ======================
 
             if self.save_model and epoch % self.save_epoch == 0:
                 save_path_str = os.path.join(self.model_dir, "epoch_" + str(epoch))
+
                 if not os.path.exists(save_path_str):
                     os.makedirs(save_path_str)
+
                 checkpoint_path = self.saver.save(  # noqa: F841
                     sess=self.sess, save_path=save_path_str
                 )
@@ -343,7 +360,7 @@ class LightGCN(object):
                         tf.summary.scalar('Loss/total_loss', loss, step=epoch)
                         tf.summary.scalar('Loss/mf_loss', mf_loss, step=epoch)
                         tf.summary.scalar('Loss/emb_loss', emb_loss, step=epoch)
-                        for metric, r in zip(self.metrics, ret)
+                        for metric, r in zip(self.metrics, ret):
                             tf.summary.scalar(f'Matric/{metric}', r, step=epoch)
                 # ====================== our changes ======================
 

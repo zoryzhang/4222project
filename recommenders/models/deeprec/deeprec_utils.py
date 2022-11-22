@@ -389,6 +389,13 @@ def create_hparams(flags):
         "save_model": True,
         "save_epoch": 5,
         "write_tfevents": False,
+
+        # ====================== our changes ======================
+        "save_board" : False,
+        "BOARD_DIR" : "logs/",
+        "board_comment" : "",
+        # ====================== our changes ======================
+
         # sequential
         "train_num_ngs": 4,
         "need_sample": True,
