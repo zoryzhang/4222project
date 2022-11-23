@@ -62,7 +62,7 @@ def parse_args():
             "comment": 'lgn',
             "load": 0,
             "lr": 0.0001,
-            "epochs": 100,
+            "epochs": 500,
             "multicore": 0,
             "seed": 2020,
             "model": 'lgn',

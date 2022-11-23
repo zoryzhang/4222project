@@ -3,8 +3,8 @@
 
 import tensorflow as tf
 tf.get_logger().setLevel('ERROR') # only show error messages
-tf.compat.v1.enable_v2_behavior()
-# tf.compat.v1.disable_eager_execution()  # need to disable eager in TF2.x
+#tf.compat.v1.enable_v2_behavior()
+tf.compat.v1.disable_eager_execution()  # need to disable eager in TF2.x
 
 import time
 import os
@@ -146,8 +146,20 @@ class LightGCN(object):
             if not os.path.exists(os.path.join(save_board_path, "val")):
                 os.makedirs(os.path.join(save_board_path, "val"))
 
+            #self.writer_train = tf.compat.v1.summary.FileWriter(os.path.join(save_board_path, "train"))
+            #self.summ_train = tf.compat.v1.summary.merge_all()
+            #self.writer_val = tf.compat.v1.summary.FileWriter(os.path.join(save_board_path, "val"))
+
             self.writer_train = tf.summary.create_file_writer(os.path.join(save_board_path, "train"))
             self.writer_val = tf.summary.create_file_writer(os.path.join(save_board_path, "val"))
+
+            #g = tf.compat.v1.Graph()
+            #with g.as_default():
+            #    self.writer_train = tf.summary.create_file_writer(os.path.join(save_board_path, "train"))
+            #    with self.writer_train.as_default():
+            #        tf.summary.scalar("my_metric", 0.5, step=step)
+            #    all_summary_ops = tf.compat.v1.summary.all_v2_summary_ops()
+            #    writer_flush = writer.flush()
         else:
             print(f"not using tensorboard")
             self.writer_train, self.writer_val = None, None
@@ -196,7 +208,6 @@ class LightGCN(object):
             #eq1 = Eq(1/x+1/x**2+1/x**3-1, 0)
             sol = solve(eq1)[1]
             sol = 1.8393
-
 
         if self.stacking_func==1:
             ego_embeddings = tf.divide(ego_embeddings,sol**1)
@@ -310,8 +321,11 @@ class LightGCN(object):
 
             # ====================== our changes ======================
             if self.save_board:
-                print(f"saving board for epoch = {epoch} in training")
                 with self.writer_train.as_default():
+                    print(f"saving board for epoch = {epoch} in training")
+                    #summ = self.sess.run(self.summ_train, feed_dict={dist: mean_moving_normal})
+                    #writer.add_summary(summ, global_step=epoch)
+
                     tf.summary.scalar('Loss/total_loss', loss, step=epoch)
                     tf.summary.scalar('Loss/mf_loss', mf_loss, step=epoch)
                     tf.summary.scalar('Loss/emb_loss', emb_loss, step=epoch)
@@ -356,13 +370,13 @@ class LightGCN(object):
                     )
                 )
                 # ====================== our changes ======================
-                if self.save_board:
-                    with self.writer_val.as_default():
-                        tf.summary.scalar('Loss/total_loss', loss, step=epoch)
-                        tf.summary.scalar('Loss/mf_loss', mf_loss, step=epoch)
-                        tf.summary.scalar('Loss/emb_loss', emb_loss, step=epoch)
-                        for metric, r in zip(self.metrics, ret):
-                            tf.summary.scalar(f'Matric/{metric}', r, step=epoch)
+                #if self.save_board:
+                #    with self.writer_val.as_default():
+                #        tf.summary.scalar('Loss/total_loss', loss, step=epoch)
+                #        tf.summary.scalar('Loss/mf_loss', mf_loss, step=epoch)
+                #        tf.summary.scalar('Loss/emb_loss', emb_loss, step=epoch)
+                #        for metric, r in zip(self.metrics, ret):
+                #            tf.summary.scalar(f'Matric/{metric}', r, step=epoch)
                 # ====================== our changes ======================
 
     def load(self, model_path=None):
