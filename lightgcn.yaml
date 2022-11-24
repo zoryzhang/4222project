@@ -22,4 +22,4 @@ info:
     metrics : ["recall", "ndcg", "precision", "map"] # metrics for evaluation
     MODEL_DIR : ./logs/lightgcn_models/ # directory of saved models
     board_comment: ""
-    BOARD_DIR : ./logs/board/
+    BOARD_DIR : ./logs/board
