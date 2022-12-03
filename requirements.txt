@@ -15,6 +15,10 @@
 # conda install tqdm matplotlib ipykernel tensorboardX pandas
 # conda install -c conda-forge scikit-learn
 
+# Connect to one of the CS labs to run the board on mac seperately
+# Same requirements can work
+# Else modified versions required in a new conda environemnt
+
 
 # conda install  Pillow sympy
 # pip install truststore easydict Jinja2
