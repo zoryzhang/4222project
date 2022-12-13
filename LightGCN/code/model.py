@@ -114,14 +114,17 @@ class LightGCN(BasicModel):
             self.embedding_item.weight.data.copy_(torch.from_numpy(self.config['item_emb']))
             print('use pretarined data')
         self.f = nn.Sigmoid()
+        print('ready to getSparseGraph')
         self.Graph = self.dataset.getSparseGraph()
-        print(f"lgn is already to go(dropout:{self.config['dropout']})")
 
-        self.alphas = nn.Parameter(torch.Tensor(args.layer+1, 1))
+        print('start alphas')
+        self.alphas = nn.Parameter(torch.Tensor(self.n_layers+1, 1))
         # nn.init.xavier_uniform_(self.alphas)
         if args.stacking_func==3:
-            nn.init.constant_(self.alphas, 1/(args.layer+1))
+            nn.init.constant_(self.alphas, 1/(self.n_layers+1))
         print(self.alphas)
+
+        print(f"lgn is already to go(dropout:{self.config['dropout']})")
 
         # print("save_txt")
     def __dropout_x(self, x, keep_prob):

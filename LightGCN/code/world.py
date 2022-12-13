@@ -48,7 +48,7 @@ config['multicore'] = args.multicore
 config['lr'] = args.lr
 config['decay'] = args.decay
 config['pretrain'] = args.pretrain
-config['A_split'] = False
+config['A_split'] = True # changed here by zory
 config['bigdata'] = False
 config['stacking_func'] = args.stacking_func
 

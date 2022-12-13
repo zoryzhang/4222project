@@ -23,45 +23,45 @@ from time import time
 class BasicDataset(Dataset):
     def __init__(self):
         print("init dataset")
-    
+
     @property
     def n_users(self):
         raise NotImplementedError
-    
+
     @property
     def m_items(self):
         raise NotImplementedError
-    
+
     @property
     def trainDataSize(self):
         raise NotImplementedError
-    
+
     @property
     def testDict(self):
         raise NotImplementedError
-    
+
     @property
     def allPos(self):
         raise NotImplementedError
-    
+
     def getUserItemFeedback(self, users, items):
         raise NotImplementedError
-    
+
     def getUserPosItems(self, users):
         raise NotImplementedError
-    
+
     def getUserNegItems(self, users):
         """
         not necessary for large dataset
         it's stupid to return all neg items in super large dataset
         """
         raise NotImplementedError
-    
+
     def getSparseGraph(self):
         """
         build a graph in torch.sparse.IntTensor.
         Details in NGCF's matrix form
-        A = 
+        A =
             |I,   R|
             |R^T, I|
         """
@@ -101,12 +101,12 @@ class LastFM(BasicDataset):
         self.testItem  = np.array(testData[:][1])
         self.Graph = None
         print(f"LastFm Sparsity : {(len(self.trainUser) + len(self.testUser))/self.n_users/self.m_items}")
-        
+
         # (users,users)
         self.socialNet    = csr_matrix((np.ones(len(trustNet)), (trustNet[:,0], trustNet[:,1]) ), shape=(self.n_users,self.n_users))
         # (users,items), bipartite graph
-        self.UserItemNet  = csr_matrix((np.ones(len(self.trainUser)), (self.trainUser, self.trainItem) ), shape=(self.n_users,self.m_items)) 
-        
+        self.UserItemNet  = csr_matrix((np.ones(len(self.trainUser)), (self.trainUser, self.trainItem) ), shape=(self.n_users,self.m_items))
+
         # pre-calculate
         self._allPos = self.getUserPosItems(list(range(self.n_users)))
         self.allNeg = []
@@ -120,15 +120,15 @@ class LastFM(BasicDataset):
     @property
     def n_users(self):
         return 1892
-    
+
     @property
     def m_items(self):
         return 4489
-    
+
     @property
     def trainDataSize(self):
         return len(self.trainUser)
-    
+
     @property
     def testDict(self):
         return self.__testDict
@@ -141,7 +141,7 @@ class LastFM(BasicDataset):
         if self.Graph is None:
             user_dim = torch.LongTensor(self.trainUser)
             item_dim = torch.LongTensor(self.trainItem)
-            
+
             first_sub = torch.stack([user_dim, item_dim + self.n_users])
             second_sub = torch.stack([item_dim+self.n_users, user_dim])
             index = torch.cat([first_sub, second_sub], dim=1)
@@ -173,7 +173,7 @@ class LastFM(BasicDataset):
             else:
                 test_data[user] = [item]
         return test_data
-    
+
     def getUserItemFeedback(self, users, items):
         """
         users:
@@ -185,32 +185,32 @@ class LastFM(BasicDataset):
         """
         # print(self.UserItemNet[users, items])
         return np.array(self.UserItemNet[users, items]).astype('uint8').reshape((-1, ))
-    
+
     def getUserPosItems(self, users):
         posItems = []
         for user in users:
             posItems.append(self.UserItemNet[user].nonzero()[1])
         return posItems
-    
+
     def getUserNegItems(self, users):
         negItems = []
         for user in users:
             negItems.append(self.allNeg[user])
         return negItems
-            
-    
-    
+
+
+
     def __getitem__(self, index):
         user = self.trainUniqueUsers[index]
         # return user_id and the positive items of the user
         return user
-    
+
     def switch2test(self):
         """
         change dataset mode to offer test data to dataloader
         """
         self.mode = self.mode_dict['test']
-    
+
     def __len__(self):
         return len(self.trainUniqueUsers)
 
@@ -271,7 +271,7 @@ class Loader(BasicDataset):
         self.testUniqueUsers = np.array(testUniqueUsers)
         self.testUser = np.array(testUser)
         self.testItem = np.array(testItem)
-        
+
         self.Graph = None
         print(f"{self.trainDataSize} interactions for training")
         print(f"{self.testDataSize} interactions for testing")
@@ -292,15 +292,15 @@ class Loader(BasicDataset):
     @property
     def n_users(self):
         return self.n_user
-    
+
     @property
     def m_items(self):
         return self.m_item
-    
+
     @property
     def trainDataSize(self):
         return self.traindataSize
-    
+
     @property
     def testDict(self):
         return self.__testDict
@@ -328,7 +328,7 @@ class Loader(BasicDataset):
         index = torch.stack([row, col])
         data = torch.FloatTensor(coo.data)
         return torch.sparse.FloatTensor(index, data, torch.Size(coo.shape))
-        
+
     def getSparseGraph(self):
         print("loading adjacency matrix")
         if self.Graph is None:
@@ -336,6 +336,7 @@ class Loader(BasicDataset):
                 pre_adj_mat = sp.load_npz(self.path + '/s_pre_adj_mat.npz')
                 print("successfully loaded...")
                 norm_adj = pre_adj_mat
+                print("copied pre_adj_mat")
             except :
                 print("generating adjacency matrix")
                 s = time()
@@ -346,12 +347,12 @@ class Loader(BasicDataset):
                 adj_mat[self.n_users:, :self.n_users] = R.T
                 adj_mat = adj_mat.todok()
                 # adj_mat = adj_mat + sp.eye(adj_mat.shape[0])
-                
+
                 rowsum = np.array(adj_mat.sum(axis=1))
                 d_inv = np.power(rowsum, -0.5).flatten()
                 d_inv[np.isinf(d_inv)] = 0.
                 d_mat = sp.diags(d_inv)
-                
+
                 norm_adj = d_mat.dot(adj_mat)
                 norm_adj = norm_adj.dot(d_mat)
                 norm_adj = norm_adj.tocsr()
