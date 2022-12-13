@@ -51,11 +51,6 @@ config['pretrain'] = args.pretrain
 config['A_split'] = False
 config['bigdata'] = False
 config['stacking_func'] = args.stacking_func
-config['alphas'] = nn.Parameter(torch.Tensor(args.layer+1, 1))
-nn.init.xavier_uniform_(config['alphas'])
-if args.stacking_func==3:
-    nn.init.constant_(config['alphas'], 1/(args.layer+1))
-print(config['alphas'])
 
 GPU = torch.cuda.is_available()
 device = torch.device('cuda' if GPU else "cpu")
