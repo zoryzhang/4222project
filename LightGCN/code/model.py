@@ -13,6 +13,9 @@ from LightGCN.code.dataloader import BasicDataset
 from torch import nn
 import numpy as np
 from sympy import symbols, Eq, solve
+import os
+
+os.environ['CUDA_VISIBLE_DEVICES'] ='0'
 
 
 class BasicModel(nn.Module):    
@@ -146,7 +149,8 @@ class LightGCN(BasicModel):
         items_emb = self.embedding_item.weight
         all_emb = torch.cat([users_emb, items_emb])
         #   torch.split(all_emb , [self.num_users, self.num_items])
-        embs = [all_emb]
+        #embs = [all_emb]
+        
         if self.config['dropout']:
             if self.training:
                 print("droping")
@@ -158,9 +162,22 @@ class LightGCN(BasicModel):
         #print(self.n_layers)
         if self.config['stacking_func']==1 or self.config['stacking_func']==1.5:
             x = symbols('x')
-            #eq1 = Eq(1/x+1/x**2+1/x**3+1/x**4-1)
-            eq1 = Eq(1/x+1/x**2+1/x**3-1)
+            eq1 = Eq(1/x+1/x**2+1/x**3+1/x**4-1)
+            #eq1 = Eq(1/x+1/x**2+1/x**3-1)
             sol = solve(eq1)[1]
+            sol = 1.8393
+
+        if self.config['stacking_func']==1:
+            all_emb = torch.div(all_emb,sol**1)
+
+        elif self.config['stacking_func']==1.5:
+            all_emb = torch.div(all_emb,sol**(self.n_layers+1))
+        
+        elif self.config['stacking_func']==2 or self.config['stacking_func']==3:
+            alpha = self.config['alphas'][0]
+            all_emb =  torch.mul(all_emb, alpha)
+
+        embs = [all_emb]
     
         for layer in range(self.n_layers):
             if self.A_split:
@@ -173,18 +190,19 @@ class LightGCN(BasicModel):
                     all_emb = side_emb
                 # new weights 1
                 elif self.config['stacking_func']==1:
-                    #all_emb = side_emb/sol**(layer+1)
-                    all_emb = side_emb/sol**((self.n_layers-layer))
-                    print(1//sol**((self.n_layers-layer)))
+                    all_emb = side_emb/sol**(layer+2)
+                    #all_emb = side_emb/sol**((self.n_layers-layer))
+                    
 
                 elif self.config['stacking_func']==1.5:
-                    #all_emb = side_emb/sol**((self.n_layers-layer))
+                    all_emb = side_emb/sol**((self.n_layers-layer+1))
                     #print(1//sol**((self.n_layers-layer)))
-                    all_emb = side_emb/sol**(layer+1)
+                    #all_emb = side_emb/sol**(layer+1)
 
                 elif self.config['stacking_func']==2 or self.config['stacking_func']==3:
-                    alpha = self.config['alphas'][layer]
-                    all_emb =  torch.matmul(side_emb, alpha)
+                    alpha = self.config['alphas'][layer+1].to('cuda')
+                    all_emb =  torch.mat(side_emb, alpha)
+                    print(self.config['alphas'])
             else:
                 all_emb = torch.sparse.mm(g_droped, all_emb)
             embs.append(all_emb)

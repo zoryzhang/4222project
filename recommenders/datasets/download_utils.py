@@ -36,7 +36,7 @@ def maybe_download(url, filename=None, work_directory=".", expected_bytes=None):
     filepath = os.path.join(work_directory, filename)
     print(filepath)
     if not os.path.exists(filepath):
-        print('url: '+url)  
+        print('url: '+url)
         r = requests.get(url, stream=True)
         print('get r: '+r)
         if r.status_code == 200:
