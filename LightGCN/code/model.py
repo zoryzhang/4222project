@@ -120,7 +120,7 @@ class LightGCN(BasicModel):
         print('start alphas')
         self.alphas = nn.Parameter(torch.Tensor(self.n_layers+1, 1))
         # nn.init.xavier_uniform_(self.alphas)
-        if args.stacking_func==3:
+        if self.config['stacking_func']==3:
             nn.init.constant_(self.alphas, 1/(self.n_layers+1))
         print(self.alphas)
 
