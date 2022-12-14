@@ -16,7 +16,7 @@ print(">>SEED:", world.seed)
 import LightGCN.code.register as register
 from LightGCN.code.register import dataset
 
-os.environ['CUDA_VISIBLE_DEVICES'] ='0'
+#os.environ['CUDA_VISIBLE_DEVICES'] ='0'
 
 #STACKING_FUNC = 0
 def sanity_check(stacking_func=0, n_layer=3):

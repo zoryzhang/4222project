@@ -61,14 +61,7 @@ class LightGCN(object):
 
         # ====================== our changes ======================
         self.stacking_func = hparams.stacking_func
-        #self.alphas = nn.Parameter(torch.Tensor(self.n_layers+1, 1))
-        #nn.init.xavier_uniform_(self.alphas)
-        initializer = tf.compat.v1.keras.initializers.VarianceScaling(
-            scale=1.0, mode="fan_avg", distribution="uniform"
-        )
-        self.alphas = tf.Variable(initializer([self.n_layers+1, 1]), trainable=True)
-        #if self.stacking_func==3:
-        #    nn.init.constant_(self.alphas, 1/(self.n_layers+1))
+        self.alphas = tf.Variable(1./(self.n_layers+1), trainable=True)
         # ====================== our changes ======================
 
         metric_options = ["map", "ndcg", "precision", "recall"]
@@ -150,8 +143,8 @@ class LightGCN(object):
             #self.summ_train = tf.compat.v1.summary.merge_all()
             #self.writer_val = tf.compat.v1.summary.FileWriter(os.path.join(save_board_path, "val"))
 
-            self.writer_train = tf.summary.create_file_writer(os.path.join(save_board_path, "train"))
-            self.writer_val = tf.summary.create_file_writer(os.path.join(save_board_path, "val"))
+            #self.writer_train = tf.summary.create_file_writer(os.path.join(save_board_path, "train"))
+            #self.writer_val = tf.summary.create_file_writer(os.path.join(save_board_path, "val"))
 
             #g = tf.compat.v1.Graph()
             #with g.as_default():
@@ -244,6 +237,7 @@ class LightGCN(object):
         )
         if self.stacking_func==1:
             all_embeddings = all_embeddings*(self.n_layers+1)
+
         u_g_embeddings, i_g_embeddings = tf.split(
             all_embeddings, [self.n_users, self.n_items], 0
         )
