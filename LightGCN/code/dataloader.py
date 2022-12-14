@@ -73,18 +73,18 @@ class LastFM(BasicDataset):
     Incldue graph information
     LastFM dataset
     """
-    def __init__(self, path="../data/lastfm"):
+    def __init__(self, path="LightGCN/data/lastfm"):
         # train or test
         cprint("loading [last fm]")
         self.mode_dict = {'train':0, "test":1}
         self.mode    = self.mode_dict['train']
         # self.n_users = 1892
         # self.m_items = 4489
-        trainData = pd.read_table(join(path, 'data1.txt'), header=None)
+        trainData = pd.read_table(join(path, 'data1.txt').replace("\\","/"), header=None)
         # print(trainData.head())
-        testData  = pd.read_table(join(path, 'test1.txt'), header=None)
+        testData  = pd.read_table(join(path, 'test1.txt').replace("\\","/"), header=None)
         # print(testData.head())
-        trustNet  = pd.read_table(join(path, 'trustnetwork.txt'), header=None).to_numpy()
+        trustNet  = pd.read_table(join(path, 'trustnetwork.txt').replace("\\","/"), header=None).to_numpy()
         # print(trustNet[:5])
         trustNet -= 1
         trainData-= 1

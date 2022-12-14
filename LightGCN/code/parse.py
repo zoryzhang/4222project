@@ -55,7 +55,7 @@ def parse_args():
             "dropout": 0,
             "keepprob": 0.6,
             "a_fold": 100,
-            "testbatch": 100,
+            "testbatch": 150,
             "path": './checkpoints',
             "topks": "[20,40,60]",
             "tensorboard": 1,
@@ -66,6 +66,6 @@ def parse_args():
             "multicore": 0,
             "seed": 2020,
             "model": 'lgn',
-            "stacking_func":1
+            "stacking_func":0
     })
     return args

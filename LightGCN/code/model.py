@@ -13,6 +13,9 @@ from LightGCN.code.dataloader import BasicDataset
 from torch import nn
 import numpy as np
 from sympy import symbols, Eq, solve
+import os
+
+os.environ['CUDA_VISIBLE_DEVICES'] ='0'
 
 
 class BasicModel(nn.Module):
@@ -176,6 +179,7 @@ class LightGCN(BasicModel):
             alpha = self.alphas[0]
             assert alpha.shape == (1,)
             all_emb =  all_emb * alpha
+            print(alpha)
 
         embs = [all_emb]
 
@@ -196,7 +200,7 @@ class LightGCN(BasicModel):
                     #print(1//sol**((self.n_layers-layer)))
                 # new weights 1.5: down
                 elif self.config['stacking_func']==1.5:
-                    #all_emb = side_emb/sol**((self.n_layers-layer))
+                    all_emb = side_emb/sol**((self.n_layers-layer+1))
                     #print(1//sol**((self.n_layers-layer)))
                     all_emb = side_emb/sol**(layer+1)
                 # new weights 3: trainable
