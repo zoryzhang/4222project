@@ -48,18 +48,9 @@ config['multicore'] = args.multicore
 config['lr'] = args.lr
 config['decay'] = args.decay
 config['pretrain'] = args.pretrain
-config['A_split'] = False
+config['A_split'] = True # changed here by zory
 config['bigdata'] = False
 config['stacking_func'] = args.stacking_func
-initializer = nn.init.normal_
-config['alphas'] = nn.Parameter(initializer(torch.Tensor(args.layer+1, 1), 1/(args.layer+1),0)).to('cuda')
-#nn.init.xavier_uniform_(config['alphas'], 1/(args.layer+1))
-#if args.stacking_func==3:
-#    nn.init.normal_(config['alphas'], 1/(args.layer+1),0)
-#    print(config['alphas'])
-
-
-#print(config['alphas'])
 
 GPU = torch.cuda.is_available()
 device = torch.device('cuda' if GPU else "cpu")

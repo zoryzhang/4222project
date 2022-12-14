@@ -3,7 +3,7 @@ model:
     model_type : "lightgcn"
     embed_size : 64 # the embedding dimension of users and items
     n_layers : 3 # number of layers of the model
-    
+
 #train
 train:
     batch_size : 1024
@@ -18,5 +18,8 @@ train:
 info:
     save_model : False # whether to save model
     save_epoch : 100 # if save_model is set to True, save the model every save_epoch
+    save_board : False
     metrics : ["recall", "ndcg", "precision", "map"] # metrics for evaluation
-    MODEL_DIR : ./tests/resources/deeprec/lightgcn/model/lightgcn_model/ # directory of saved models
+    MODEL_DIR : ./logs/lightgcn_models/ # directory of saved models
+    board_comment: ""
+    BOARD_DIR : ./logs/board

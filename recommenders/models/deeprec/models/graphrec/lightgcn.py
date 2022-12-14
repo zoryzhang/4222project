@@ -2,6 +2,10 @@
 # Licensed under the MIT License.
 
 import tensorflow as tf
+tf.get_logger().setLevel('ERROR') # only show error messages
+#tf.compat.v1.enable_v2_behavior()
+tf.compat.v1.disable_eager_execution()  # need to disable eager in TF2.x
+
 import time
 import os
 import sys
@@ -16,7 +20,6 @@ from recommenders.evaluation.python_evaluation import (
 )
 from recommenders.utils.python_utils import get_top_k_scored_items
 
-tf.compat.v1.disable_eager_execution()  # need to disable eager in TF2.x
 
 
 class LightGCN(object):
@@ -55,6 +58,8 @@ class LightGCN(object):
         self.save_epoch = hparams.save_epoch
         self.metrics = hparams.metrics
         self.model_dir = hparams.MODEL_DIR
+
+        # ====================== our changes ======================
         self.stacking_func = hparams.stacking_func
         #self.alphas = nn.Parameter(torch.Tensor(self.n_layers+1, 1))
         #nn.init.xavier_uniform_(self.alphas)
@@ -64,6 +69,7 @@ class LightGCN(object):
         self.alphas = tf.Variable(initializer([self.n_layers+1, 1]), trainable=True)
         #if self.stacking_func==3:
         #    nn.init.constant_(self.alphas, 1/(self.n_layers+1))
+        # ====================== our changes ======================
 
         metric_options = ["map", "ndcg", "precision", "recall"]
         for metric in self.metrics:
@@ -126,7 +132,38 @@ class LightGCN(object):
         self.sess = tf.compat.v1.Session(
             config=tf.compat.v1.ConfigProto(gpu_options=gpu_options)
         )
+
         self.sess.run(tf.compat.v1.global_variables_initializer())
+
+        # ====================== our changes ======================
+        self.save_board = hparams.save_board
+        if self.save_board:
+            save_board_path = os.path.join(hparams.BOARD_DIR, time.strftime ("%Y%m%d_%H%M_") + hparams.board_comment)
+            print(f"using tensorboard in path {os.path.abspath(save_board_path)}")
+
+            if not os.path.exists(os.path.join(save_board_path, "train")):
+                os.makedirs(os.path.join(save_board_path, "train"))
+            if not os.path.exists(os.path.join(save_board_path, "val")):
+                os.makedirs(os.path.join(save_board_path, "val"))
+
+            #self.writer_train = tf.compat.v1.summary.FileWriter(os.path.join(save_board_path, "train"))
+            #self.summ_train = tf.compat.v1.summary.merge_all()
+            #self.writer_val = tf.compat.v1.summary.FileWriter(os.path.join(save_board_path, "val"))
+
+            self.writer_train = tf.summary.create_file_writer(os.path.join(save_board_path, "train"))
+            self.writer_val = tf.summary.create_file_writer(os.path.join(save_board_path, "val"))
+
+            #g = tf.compat.v1.Graph()
+            #with g.as_default():
+            #    self.writer_train = tf.summary.create_file_writer(os.path.join(save_board_path, "train"))
+            #    with self.writer_train.as_default():
+            #        tf.summary.scalar("my_metric", 0.5, step=step)
+            #    all_summary_ops = tf.compat.v1.summary.all_v2_summary_ops()
+            #    writer_flush = writer.flush()
+        else:
+            print(f"not using tensorboard")
+            self.writer_train, self.writer_val = None, None
+        # ====================== our changes ======================
 
     def _init_weights(self):
         """Initialize user and item embeddings.
@@ -163,7 +200,7 @@ class LightGCN(object):
             [self.weights["user_embedding"], self.weights["item_embedding"]], axis=0
         )
 
-        #changes start here
+        # ====================== our changes ======================
 
         if self.stacking_func==1 or self.stacking_func==1.5:
             x = symbols('x')
@@ -171,17 +208,16 @@ class LightGCN(object):
             #eq1 = Eq(1/x+1/x**2+1/x**3-1, 0)
             sol = solve(eq1)[1]
             sol = 1.8393
-        
-        
+
         if self.stacking_func==1:
             ego_embeddings = tf.divide(ego_embeddings,sol**1)
 
         elif self.stacking_func==1.5:
             ego_embeddings = tf.divide(ego_embeddings,sol**(self.n_layers+1))
-        
+
         elif self.stacking_func==2 or self.stacking_func==3:
             alpha = self.alphas[0]
-            ego_embeddings =  tf.matmul(ego_embeddings, alpha)
+            ego_embeddings =  tf.scalar_mul(ego_embeddings, alpha)
 
         all_embeddings = [ego_embeddings]
 
@@ -200,10 +236,7 @@ class LightGCN(object):
                 all_embeddings += [tf.divide(ego_embeddings,sol**((self.n_layers-k+1)))]
             elif self.stacking_func==2 or self.stacking_func==3:
                 alpha = self.alphas[k+1]
-                all_embeddings += [tf.matmul(ego_embeddings, alpha)]
-
-        #changes end here
-
+                all_embeddings += [tf.scalar_mul(ego_embeddings, alpha)]
 
         all_embeddings = tf.stack(all_embeddings, 1)
         all_embeddings = tf.reduce_mean(
@@ -214,6 +247,9 @@ class LightGCN(object):
         u_g_embeddings, i_g_embeddings = tf.split(
             all_embeddings, [self.n_users, self.n_items], 0
         )
+        # ====================== our changes ======================
+
+
         return u_g_embeddings, i_g_embeddings
 
     def _create_bpr_loss(self, users, pos_items, neg_items):
@@ -283,10 +319,25 @@ class LightGCN(object):
             train_end = time.time()
             train_time = train_end - train_start
 
+            # ====================== our changes ======================
+            if self.save_board:
+                with self.writer_train.as_default():
+                    print(f"saving board for epoch = {epoch} in training")
+                    #summ = self.sess.run(self.summ_train, feed_dict={dist: mean_moving_normal})
+                    #writer.add_summary(summ, global_step=epoch)
+
+                    tf.summary.scalar('Loss/total_loss', loss, step=epoch)
+                    tf.summary.scalar('Loss/mf_loss', mf_loss, step=epoch)
+                    tf.summary.scalar('Loss/emb_loss', emb_loss, step=epoch)
+                self.writer_train.flush()
+            # ====================== our changes ======================
+
             if self.save_model and epoch % self.save_epoch == 0:
                 save_path_str = os.path.join(self.model_dir, "epoch_" + str(epoch))
+
                 if not os.path.exists(save_path_str):
                     os.makedirs(save_path_str)
+
                 checkpoint_path = self.saver.save(  # noqa: F841
                     sess=self.sess, save_path=save_path_str
                 )
@@ -318,6 +369,15 @@ class LightGCN(object):
                         ),
                     )
                 )
+                # ====================== our changes ======================
+                #if self.save_board:
+                #    with self.writer_val.as_default():
+                #        tf.summary.scalar('Loss/total_loss', loss, step=epoch)
+                #        tf.summary.scalar('Loss/mf_loss', mf_loss, step=epoch)
+                #        tf.summary.scalar('Loss/emb_loss', emb_loss, step=epoch)
+                #        for metric, r in zip(self.metrics, ret):
+                #            tf.summary.scalar(f'Matric/{metric}', r, step=epoch)
+                # ====================== our changes ======================
 
     def load(self, model_path=None):
         """Load an existing model.
@@ -372,7 +432,7 @@ class LightGCN(object):
                         self.data.test, topk_scores, relevancy_method=None, k=self.top_k
                     )
                 )
-       
+
         return ret
 
     def score(self, user_ids, remove_seen=True):

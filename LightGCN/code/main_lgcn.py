@@ -33,7 +33,7 @@ def run_lightgcn(stacking_func, n_layer=3):
     world.config['lightGCN_n_layers'] = n_layer
     sf = world.config['stacking_func']
     cprint(f'stacking_func: {sf}')
-    #Recmodel = Recmodel.to(world.device)
+
     Recmodel = register.MODELS[world.model_name](world.config, dataset)
     Recmodel = Recmodel.to(world.device)
     bpr = utils.BPRLoss(Recmodel, world.config)
