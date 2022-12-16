@@ -200,7 +200,7 @@ class LightGCN(BasicModel):
                     #print(1//sol**((self.n_layers-layer)))
                 # new weights 1.5: down
                 elif self.config['stacking_func']==1.5:
-                    all_emb = side_emb/sol**((self.n_layers-layer+1))
+                    # all_emb = side_emb/sol**((self.n_layers-layer+1))
                     #print(1//sol**((self.n_layers-layer)))
                     all_emb = side_emb/sol**(layer+1)
                 # new weights 3: trainable
